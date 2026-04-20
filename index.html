@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución de la SSO en Guatemala</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #21262d;
+    --gold: #d4a843;
+    --gold-light: #f0c96d;
+    --green: #3fb950;
+    --blue: #58a6ff;
+    --red: #f85149;
+    --muted: #8b949e;
+    --text: #e6edf3;
+    --text-dim: #c9d1d9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Serif 4', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    padding: 60px 40px 40px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(212,168,67,0.06) 0%, transparent 100%);
+    overflow: hidden;
+  }
+
+  header::after {
+    content: 'SSO';
+    position: absolute;
+    right: -20px;
+    top: -30px;
+    font-family: 'Playfair Display', serif;
+    font-size: 200px;
+    font-weight: 900;
+    color: rgba(212,168,67,0.04);
+    letter-spacing: -10px;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--text);
+    max-width: 700px;
+    margin-bottom: 20px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 600px;
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* Era filters */
+  .filters {
+    display: flex;
+    gap: 8px;
+    padding: 20px 40px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    scrollbar-width: none;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+
+  .filter-btn {
+    padding: 6px 16px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Source Serif 4', serif;
+    font-size: 13px;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--gold);
+    color: #0d1117;
+    border-color: var(--gold);
+    font-weight: 600;
+  }
+
+  /* Main layout */
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+    position: relative;
+  }
+
+  /* Timeline spine */
+  .timeline {
+    position: relative;
+    padding-top: 60px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 148px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--border) 5%, var(--border) 95%, transparent);
+  }
+
+  /* Era section */
+  .era-section {
+    margin-bottom: 8px;
+  }
+
+  .era-label {
+    position: sticky;
+    top: 68px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 0;
+    margin-bottom: 4px;
+  }
+
+  .era-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    width: 140px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .era-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+    margin-left: 28px;
+  }
+
+  /* Event item */
+  .event {
+    display: flex;
+    gap: 0;
+    margin-bottom: 2px;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeUp 0.4s ease forwards;
+  }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .event-year {
+    width: 140px;
+    flex-shrink: 0;
+    text-align: right;
+    padding-right: 24px;
+    padding-top: 20px;
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    transition: color 0.2s;
+  }
+
+  .event-dot-col {
+    width: 17px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 24px;
+  }
+
+  .event-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+    transition: all 0.2s;
+    position: relative;
+    z-index: 1;
+  }
+
+  .event-body {
+    flex: 1;
+    padding: 16px 0 16px 20px;
+    border-left: none;
+    cursor: pointer;
+  }
+
+  .event-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 22px;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .event-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+    background: var(--border);
+    transition: background 0.2s;
+  }
+
+  .event-card:hover {
+    border-color: rgba(212,168,67,0.4);
+    transform: translateX(4px);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+  .event-card:hover::before { background: var(--gold); }
+  .event-card:hover + .event-dot-col .event-dot,
+  .event:hover .event-dot {
+    border-color: var(--gold);
+    background: var(--gold);
+    box-shadow: 0 0 10px rgba(212,168,67,0.5);
+  }
+  .event:hover .event-year { color: var(--gold-light); }
+
+  .event-card.expanded {
+    border-color: rgba(212,168,67,0.5);
+  }
+  .event-card.expanded::before { background: var(--gold); }
+
+  .event-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+  }
+
+  .tag-ley { background: rgba(88,166,255,0.15); color: var(--blue); }
+  .tag-inst { background: rgba(63,185,80,0.15); color: var(--green); }
+  .tag-regl { background: rgba(212,168,67,0.15); color: var(--gold); }
+  .tag-const { background: rgba(248,81,73,0.15); color: var(--red); }
+  .tag-int { background: rgba(163,113,247,0.15); color: #a78bfa; }
+  .tag-ant { background: rgba(139,148,158,0.15); color: var(--muted); }
+
+  .event-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+
+  .event-summary {
+    font-size: 13.5px;
+    color: var(--text-dim);
+    line-height: 1.65;
+    font-weight: 300;
+  }
+
+  .event-detail {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    font-weight: 300;
+    font-style: italic;
+  }
+
+  .event-detail.open { display: block; animation: fadeUp 0.25s ease; }
+
+  .event-significance {
+    margin-top: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--gold);
+    font-style: normal;
+    font-weight: 400;
+  }
+  .event-significance::before {
+    content: '↳';
+    flex-shrink: 0;
+    font-style: normal;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    header { padding: 40px 20px 30px; }
+    .container { padding: 0 16px 60px; }
+    .filters, .legend { padding: 12px 16px; }
+    .timeline::before { left: 80px; }
+    .event-year { width: 72px; font-size: 11px; }
+    .era-name { width: 72px; font-size: 9px; }
+    .event-title { font-size: 14px; }
+  }
+
+  .source-note {
+    padding: 20px 40px;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Trabajo Universitario · Historia de la SSO</div>
+  <h1>Evolución de la <em>Seguridad y Salud Ocupacional</em> en Guatemala</h1>
+  <p class="subtitle">Desde las Leyes de Indias coloniales hasta el marco normativo vigente. Un recorrido de más de cuatro siglos de protección al trabajador guatemalteco.</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#8b949e"></div> Antecedente histórico</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Ley / Decreto</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Constitución</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Institución</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div> Reglamento</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div> Internacional / OIT</div>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="filterEra('all')">Todos</button>
+  <button class="filter-btn" onclick="filterEra('colonial')">Colonial</button>
+  <button class="filter-btn" onclick="filterEra('liberal')">Período Liberal</button>
+  <button class="filter-btn" onclick="filterEra('revolucion')">Revolución del 44</button>
+  <button class="filter-btn" onclick="filterEra('posrevolucion')">Post-Revolución</button>
+  <button class="filter-btn" onclick="filterEra('moderno')">Era Moderna</button>
+  <button class="filter-btn" onclick="filterEra('actual')">Marco Vigente</button>
+</div>
+
+<div class="container">
+  <div class="timeline" id="timeline"></div>
+</div>
+
+<p class="source-note">
+  Fuentes: IGSS (Historia institucional); Seguridad Laboral Latinoamérica; Agencia Guatemalteca de Noticias; vLex Guatemala (AG 229-2014); Studocu USAC (Historia del Derecho Laboral); Prensa Libre; Ministerio de Trabajo y Previsión Social de Guatemala.
+</p>
+
+<script>
+const events = [
+  // COLONIAL
+  {
+    year: 1542, era: 'colonial',
+    tag: 'ant', tagLabel: 'Antecedente',
+    title: 'Leyes de Indias — Primer antecedente en el Continente',
+    summary: 'Las Leyes de Indias (compiladas definitivamente en 1680) constituyen el primer antecedente de legislación laboral en Guatemala. Entre sus disposiciones se encontraba la regulación de la jornada de trabajo de 8 horas para los indígenas. Aunque su aplicación dejó mucho que desear, representan un curioso anticipo de la legislación laboral que se implementaría siglos después.',
+    detail: 'Estas normas fueron renovadas en 1835 y 1851 por las legislaturas estatales y republicanas de Guatemala, respectivamente. Su existencia demuestra que la preocupación por las condiciones del trabajador tiene raíces coloniales, aunque la protección era más formal que real.',
+    significance: 'Fuente más antigua documentada de protección laboral en Guatemala.'
+  },
+  // LIBERAL
+  {
+    year: 1871, era: 'liberal',
+    tag: 'ant', tagLabel: 'Antecedente',
+    title: 'Revolución Liberal — Primeras leyes laborales republicanas',
+    summary: 'Con la Revolución Liberal de 1871 se emite por primera vez el Código Civil, aplicado a las relaciones de trabajo. Se dictan la "Ley de Trabajadores Rurales" que regulaba el trabajo de los colonos de fincas, y diversas normas de tipo laboral.',
+    detail: 'Este período marca el inicio de una legislación laboral republicana propia, aunque orientada principalmente a la economía agroexportadora (café), sin protecciones reales de salud y seguridad para los trabajadores.',
+    significance: 'Primera codificación laboral de la Guatemala independiente.'
+  },
+  {
+    year: 1894, era: 'liberal',
+    tag: 'ley', tagLabel: 'Ley',
+    title: 'Ley de Trabajadores de 1894',
+    summary: 'Se dicta la "Ley de Trabajadores" con disposiciones que intentaban regular condiciones básicas de trabajo. Lamentablemente, sus preceptos no llegaron a cumplirse de manera efectiva en la práctica.',
+    detail: 'Este instrumento refleja un primer intento serio de regulación laboral más allá del ámbito agrario, aunque careció de mecanismos de aplicación efectiva y de instituciones encargadas de hacerla cumplir.',
+    significance: 'Primer intento de regulación laboral general en el período republicano.'
+  },
+  {
+    year: 1906, era: 'liberal',
+    tag: 'ley', tagLabel: 'Ley',
+    title: 'Ley Protectora de Obreros sobre Accidentes de Trabajo (Decreto 669)',
+    summary: 'Durante el gobierno de Manuel Estrada Cabrera se emite el Decreto 669, la "Ley Protectora de Obreros sobre Accidentes de Trabajo". Su fin era proteger a los trabajadores contra riesgos profesionales. Ordenó la creación de Cajas Cooperativas de Socorros en cada fábrica, taller o explotación con más de 10 trabajadores, para pagar indemnizaciones. El aporte de los trabajadores era del 6% de su salario, con indemnización vitalicia del 60% en caso de incapacidad permanente.',
+    detail: 'Esta ley es el antecedente más directo de la previsión social en Guatemala. Contiene normas que anticipan la futura protección social. Sin embargo, responsabilizaba al "jefe del establecimiento" y no al patrono del accidente, y pocas Cajas Cooperativas llegaron a establecerse. El 14 de febrero de 1907 se reglamentó su aplicación.',
+    significance: 'Primera norma específica sobre accidentes de trabajo en Guatemala. Referencia directa en el libro "Bases de la Seguridad Social en Guatemala" (1945).'
+  },
+  {
+    year: 1926, era: 'liberal',
+    tag: 'ley', tagLabel: 'Ley',
+    title: 'Ley del Trabajo — Decreto Legislativo 1434',
+    summary: 'Bajo el gobierno de José María Orellana se emite la "Ley del Trabajo" (Decreto 1434 del 30 de abril de 1926). Es el primer antecedente importante del futuro Código de Trabajo y del sindicalismo. Por primera vez estableció los Comités de Conciliación y los Tribunales de Arbitraje, y limitaba la libertad de las partes en la contratación.',
+    detail: 'Esta ley incorporó también protección a la madre trabajadora: descanso prenatal, postnatal y período de lactancia. Fue inspirada en legislación mexicana y costarricense, y marcó un salto cualitativo hacia la regulación moderna del trabajo.',
+    significance: 'Primer antecedente del Código de Trabajo; primera mención explícita de maternidad como riesgo laboral protegido.'
+  },
+  {
+    year: 1931, era: 'liberal',
+    tag: 'ant', tagLabel: 'Retroceso',
+    title: 'Dictadura de Jorge Ubico — Paréntesis regresivo (1931–1944)',
+    summary: 'Con el ascenso de Jorge Ubico al poder en 1931, el movimiento obrero guatemalteco se desmantela. Las palabras "sindicato", "huelga" y "derechos laborales" desaparecen del vocabulario público. Se reinstauran formas de trabajo forzado, salarios bajos y la Ley contra la Vagancia de 1934, que criminalizaba a quienes no podían demostrar empleo formal.',
+    detail: 'Este período de 14 años representa un retroceso severo en la protección laboral. Los avances de las décadas anteriores quedaron en suspenso. La Ley contra la Vagancia (8 de mayo de 1934) fue especialmente perniciosa para los trabajadores rurales e indígenas.',
+    significance: 'Contexto negativo que explica el impulso transformador de la Revolución de 1944.'
+  },
+  // REVOLUCIÓN
+  {
+    year: 1944, era: 'revolucion',
+    tag: 'ant', tagLabel: 'Hito',
+    title: 'Revolución del 20 de Octubre — Nacimiento del Derecho Laboral moderno',
+    summary: 'El 20 de octubre de 1944 se derrocó al gobierno de Federico Ponce Vaides y comenzó la era revolucionaria. Es considerado el verdadero nacimiento del derecho laboral moderno en Guatemala. Guatemala se convierte en miembro de la Organización Internacional del Trabajo (OIT) en 1945. El gobierno de Arévalo gestionó la venida de técnicos en Seguridad Social que publicaron el libro "Bases de la Seguridad Social en Guatemala".',
+    detail: 'Los técnicos Oscar Barahona Streber (costarricense) y Walter Dittel (chileno) realizaron un estudio completo de las condiciones económicas, geográficas, étnicas y culturales de Guatemala. Este estudio fue la base intelectual y técnica para la creación del IGSS.',
+    significance: 'Punto de inflexión histórico. Por primera vez las masas desfavorecidas conocen la justicia social a través de legislación laboral efectiva.'
+  },
+  {
+    year: 1945, era: 'revolucion',
+    tag: 'const', tagLabel: 'Constitución',
+    title: 'Constitución Política de 1945 — El Seguro Social Obligatorio',
+    summary: 'La nueva Constitución, promulgada bajo la presidencia de Juan José Arévalo, establece en el Artículo 63 que "SE ESTABLECE EL SEGURO SOCIAL OBLIGATORIO". También reconoce por primera vez el trabajo como derecho del individuo y obligación social, e incorpora seguridad e higiene en el trabajo como garantías constitucionales.',
+    detail: 'Esta constitución cubre al menos: invalidez, vejez, muerte, enfermedad y accidentes de trabajo. Establece que a la prima del seguro contribuirán el patrono, los obreros y el Estado. Es una de las constituciones más democráticas que ha tenido Guatemala desde su independencia.',
+    significance: 'Base constitucional que habilita jurídicamente la creación del IGSS y toda la arquitectura de seguridad social posterior.'
+  },
+  {
+    year: 1946, era: 'revolucion',
+    tag: 'inst', tagLabel: 'Institución',
+    title: 'Decreto 295 — Creación del IGSS',
+    summary: 'El 28 de octubre de 1946 el Congreso de la República emite el Decreto 295, la "Ley Orgánica del Instituto Guatemalteco de Seguridad Social". Se crea una institución autónoma de derecho público con finalidad de aplicar un régimen nacional, unitario y obligatorio de Seguridad Social.',
+    detail: 'En el Seminario Centroamericano de Seguridad Social de 1951 (San José, Costa Rica), con auspicio de la OIT, se reconoció que las realizaciones del IGSS en Guatemala fueron "el experimento social más interesante y completo de esa época" sobre seguridad social en Centroamérica.',
+    significance: 'Institución rectora de la SSO en Guatemala hasta la fecha. Uno de los logros sociales más importantes de la Revolución de 1944.'
+  },
+  {
+    year: 1947, era: 'revolucion',
+    tag: 'ley', tagLabel: 'Código',
+    title: 'Código de Trabajo — Decreto 330',
+    summary: 'Entra en vigor el 1° de mayo de 1947 el Código de Trabajo (Decreto 330). Recoge los principios de la Constitución de 1945 sobre materia laboral. En sus artículos 197 a 205 contiene normas sobre Higiene y Seguridad en el Trabajo. Establece la jornada laboral de 8 horas, protección ante despidos injustificados, salario mínimo y condiciones mínimas de trabajo.',
+    detail: 'El Código fue inspirado en la legislación mexicana y el Código de Trabajo de Costa Rica. Sus principios eran democráticos y tutelares del trabajador. Establece la obligación del empleador de proveer un entorno seguro y saludable.',
+    significance: 'Primer cuerpo legal comprehensivo de derechos laborales. Marco de referencia para toda la normativa de SSO posterior.'
+  },
+  {
+    year: 1948, era: 'revolucion',
+    tag: 'inst', tagLabel: 'Institución',
+    title: 'IGSS inicia operaciones — Programa de Accidentes de Trabajo',
+    summary: 'El 2 de enero de 1948 se inauguraron las clínicas del IGSS en la 5ª calle y 8ª avenida de la zona 1 de la capital. El presidente Arévalo indicó que ese era uno de los capítulos más importantes de la Revolución. En 1948 inicia el programa de accidentes por trabajo; en 1949, accidentes comunes.',
+    detail: 'El IGSS comenzó así su cobertura práctica de riesgos laborales: 1948 (accidentes de trabajo), 1949 (accidentes comunes), 1953 (protección materno-infantil), 1968 (enfermedad y maternidad), 1977 (invalidez, vejez y sobrevivencia).',
+    significance: 'Inicio de la protección efectiva contra accidentes laborales con cobertura institucional.'
+  },
+  // POST-REVOLUCIÓN
+  {
+    year: 1957, era: 'posrevolucion',
+    tag: 'regl', tagLabel: 'Reglamento',
+    title: 'Reglamento General sobre Higiene y Seguridad en el Trabajo (AG 28/12/1957)',
+    summary: 'Se emite mediante Acuerdo Gubernativo el Reglamento General sobre Higiene y Seguridad en el Trabajo. Su objeto es regular las condiciones generales de higiene y seguridad en que deben ejecutar sus labores los trabajadores, con el fin de proteger su vida, su salud y su integridad corporal.',
+    detail: 'Este reglamento entró en vigor el 1° de enero del año siguiente y fue el instrumento técnico-normativo central de la SSO por más de 50 años, hasta su sustitución en 2014. Contenía disposiciones sobre iluminación, ventilación, ruido, protección de maquinaria, equipos de protección personal, entre otros.',
+    significance: 'Primera reglamentación técnica específica de higiene y seguridad. Estuvo vigente por 57 años.'
+  },
+  {
+    year: 1968, era: 'posrevolucion',
+    tag: 'inst', tagLabel: 'Programa',
+    title: 'IGSS amplía cobertura — Enfermedad y Maternidad',
+    summary: 'El IGSS extiende su cobertura al programa de Enfermedad y Maternidad en 1968, y en 1977 al programa de Invalidez, Vejez y Sobrevivencia (IVS). Se consolida la red de hospitales y clínicas del IGSS en todo el país.',
+    detail: 'La expansión programática del IGSS en estas décadas refleja la consolidación del sistema de seguridad social, aunque la cobertura seguía siendo principalmente urbana y del sector formal.',
+    significance: 'Ampliación del sistema de protección social con énfasis en salud ocupacional integral.'
+  },
+  {
+    year: 1985, era: 'posrevolucion',
+    tag: 'const', tagLabel: 'Constitución',
+    title: 'Constitución Política de 1985 — Artículo 100',
+    summary: 'La Constitución Política vigente, promulgada el 31 de mayo de 1985 (en vigor desde el 14 de enero de 1986), establece en el Artículo 100: "El Estado reconoce y garantiza el derecho de la seguridad social para beneficio de los habitantes de la Nación". Los artículos 93 al 100 obligan al Estado a prevenir la contaminación ambiental y mantener el equilibrio ecológico.',
+    detail: 'Esta constitución da rango constitucional definitivo a la seguridad social y refuerza el marco de derechos laborales. Fue reformada por Acuerdo Legislativo N° 18-93 del 17 de noviembre de 1993.',
+    significance: 'Marco constitucional vigente que garantiza la SSO como derecho fundamental de los guatemaltecos.'
+  },
+  {
+    year: 1994, era: 'posrevolucion',
+    tag: 'regl', tagLabel: 'Reglamento IGSS',
+    title: 'Acuerdo IGSS 1002 — Reglamento sobre Protección Relativa a Accidentes',
+    summary: 'La Junta Directiva del IGSS emite el Acuerdo 1002, que regula el "Reglamento sobre Protección Relativa a Accidentes". Este instrumento establece el marco operativo del IGSS para atención de accidentes laborales, definiendo coberturas, prestaciones en dinero y en especie, y obligaciones de patronos y trabajadores.',
+    detail: 'El Acuerdo 1002 deroga el antiguo Acuerdo 97 y varios otros acuerdos complementarios. Ha sido modificado por los Acuerdos 1031 (1996) y 1247 (2010).',
+    significance: 'Reglamento operativo vigente del IGSS para la cobertura de riesgos laborales.'
+  },
+  // MODERNO
+  {
+    year: 2000, era: 'moderno',
+    tag: 'regl', tagLabel: 'Acuerdo Ministerial',
+    title: 'Acuerdo Ministerial 314-2000 — Instituciones involucradas en SSO',
+    summary: 'Se emite el Acuerdo Ministerial 314-2000 que define y organiza formalmente las instituciones involucradas en la Salud y Seguridad Ocupacional en Guatemala, estableciendo roles y competencias entre el MINTRAB y el IGSS.',
+    detail: 'Este acuerdo es referencia para la coordinación interinstitucional en materia de SSO y es mencionado en los programas de formación como marco organizacional del sistema.',
+    significance: 'Clarifica la arquitectura institucional de la SSO guatemalteca.'
+  },
+  {
+    year: 2010, era: 'moderno',
+    tag: 'regl', tagLabel: 'Acuerdo Ministerial',
+    title: 'Acuerdo Ministerial 191-2010',
+    summary: 'Acuerdo Ministerial sobre Salud y Seguridad Ocupacional que complementa el marco reglamentario existente, ampliando las disposiciones del MINTRAB en materia de prevención de riesgos y vigilancia de la salud de los trabajadores.',
+    detail: 'Este acuerdo forma parte del proceso de actualización normativa que culminaría con el gran reglamento de 2014.',
+    significance: 'Actualización parcial del marco normativo previo a la reforma integral de 2014.'
+  },
+  // ACTUAL
+  {
+    year: 2014, era: 'actual',
+    tag: 'regl', tagLabel: 'Reglamento',
+    title: 'Acuerdo Gubernativo 229-2014 — Nuevo Reglamento de SSO',
+    summary: 'El 23 de julio de 2014 se emite el Reglamento de Salud y Seguridad Ocupacional (AG 229-2014), que sustituye el reglamento de 1957. Su objetivo es regular las condiciones mínimas en SSO para proteger la vida, seguridad, salud e integridad de todos los trabajadores. Exige planes de SSO, comités bipartitos en empresas de 10 o más trabajadores, y monitores en empresas más pequeñas.',
+    detail: 'El reglamento se basa en la legislación nacional y en los convenios de la OIT ratificados por Guatemala. Incluye disposiciones sobre ergonomía, estrés térmico, radiaciones, uso de ordenadores, manipulación de cargas, y equipos de protección personal. Establece el CONASSO (Consejo Nacional de Salud, Higiene y Seguridad Ocupacional).',
+    significance: 'Marco reglamentario de referencia más completo hasta la fecha. Alinea la normativa guatemalteca con estándares internacionales.'
+  },
+  {
+    year: 2015, era: 'actual',
+    tag: 'regl', tagLabel: 'Reforma',
+    title: 'Acuerdo Gubernativo 33-2016 — Primera reforma al AG 229-2014',
+    summary: 'Se emite el Acuerdo Gubernativo 33-2016 (5 de febrero de 2016), primera reforma al Reglamento de SSO. Actualiza normativas para alinearlas con estándares internacionales, fortalece las responsabilidades de los empleadores y fomenta la participación de los trabajadores en la identificación de riesgos.',
+    detail: 'La reforma modificó varios artículos clave del reglamento original, incluyendo aspectos de los comités bipartitos y las atribuciones de los monitores de SSO.',
+    significance: 'Primera actualización del marco normativo vigente, reforzando la participación trabajador-empleador.'
+  },
+  {
+    year: 2022, era: 'actual',
+    tag: 'regl', tagLabel: 'Reforma',
+    title: 'Acuerdo Gubernativo 57-2022 — Segunda reforma',
+    summary: 'El 1 de marzo de 2022 entra en vigor el Acuerdo Gubernativo 57-2022, segunda reforma al reglamento de SSO. Junto con la plataforma digital del MINTRAB para subir Planes de SSO, impulsa la digitalización y modernización de los trámites en materia de salud y seguridad ocupacional.',
+    detail: 'Esta reforma responde a la necesidad de adaptar el reglamento a los nuevos riesgos laborales y a los estándares post-pandemia, e incorpora nuevas herramientas digitales de gestión.',
+    significance: 'Modernización del marco normativo para adaptar la SSO a la era digital y contextos laborales contemporáneos.'
+  },
+  {
+    year: 2023, era: 'actual',
+    tag: 'regl', tagLabel: 'Acuerdo Ministerial',
+    title: 'Acuerdo Ministerial 486-2023 — Comités Bipartitos',
+    summary: 'El Acuerdo Ministerial 486-2023 regula el "Reglamento para la Constitución, Organización y Funcionamiento de los Comités Bipartitos de Salud y Seguridad Ocupacional". También se emite el Acuerdo Ministerial 418-2023, complementando el marco institucional.',
+    detail: 'Los comités bipartitos son la principal herramienta de participación trabajador-empleador en materia de SSO. Este acuerdo establece con mayor precisión su organización y funciones.',
+    significance: 'Marco más reciente del sistema de SSO guatemalteco, con énfasis en gestión participativa.'
+  },
+];
+
+const eraLabels = {
+  colonial: 'Período Colonial (s. XVI–XVIII)',
+  liberal: 'Período Liberal (1871–1944)',
+  revolucion: 'Revolución de 1944',
+  posrevolucion: 'Post-Revolución (1954–1999)',
+  moderno: 'Era Moderna (2000–2013)',
+  actual: 'Marco Vigente (2014–presente)',
+};
+
+let currentFilter = 'all';
+
+function filterEra(era) {
+  currentFilter = era;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderTimeline();
+}
+
+function toggleDetail(id) {
+  const detail = document.getElementById('detail-' + id);
+  const card = document.getElementById('card-' + id);
+  if (detail.classList.contains('open')) {
+    detail.classList.remove('open');
+    card.classList.remove('expanded');
+  } else {
+    detail.classList.add('open');
+    card.classList.add('expanded');
+  }
+}
+
+function renderTimeline() {
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = '';
+
+  const filtered = currentFilter === 'all' ? events : events.filter(e => e.era === currentFilter);
+  
+  // Group by era
+  const eras = [...new Set(filtered.map(e => e.era))];
+  
+  eras.forEach(era => {
+    const eraEvents = filtered.filter(e => e.era === era);
+    const section = document.createElement('div');
+    section.className = 'era-section';
+    section.dataset.era = era;
+
+    section.innerHTML = `
+      <div class="era-label">
+        <span class="era-name">${eraLabels[era]}</span>
+        <div class="era-line"></div>
+      </div>
+    `;
+
+    eraEvents.forEach((ev, i) => {
+      const idx = events.indexOf(ev);
+      const delay = i * 0.06;
+      const tagColors = {
+        ley: 'tag-ley', inst: 'tag-inst', regl: 'tag-regl',
+        const: 'tag-const', int: 'tag-int', ant: 'tag-ant'
+      };
+
+      section.innerHTML += `
+        <div class="event" style="animation-delay:${delay}s">
+          <div class="event-year">${ev.year}</div>
+          <div class="event-dot-col">
+            <div class="event-dot" id="dot-${idx}"></div>
+          </div>
+          <div class="event-body" onclick="toggleDetail(${idx})">
+            <div class="event-card" id="card-${idx}">
+              <span class="event-tag ${tagColors[ev.tag]}">${ev.tagLabel}</span>
+              <div class="event-title">${ev.title}</div>
+              <div class="event-summary">${ev.summary}</div>
+              <div class="event-detail" id="detail-${idx}">
+                ${ev.detail}
+                <div class="event-significance">${ev.significance}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    tl.appendChild(section);
+  });
+}
+
+renderTimeline();
+</script>
+</body>
+</html>
